@@ -29,6 +29,11 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+
+        scoreDisplay:{
+            default: null,
+            type: cc.Label
+        }
     },
 
     onLoad() {
@@ -36,6 +41,7 @@ cc.Class({
         this.groundY = this.ground.y + this.ground.height / 2;
         // 生成一个新的星星
         this.spawnNewStar();
+        this.score = 0;
     },
 
     spawnNewStar:function(){
@@ -47,6 +53,9 @@ cc.Class({
         newStar.setPosition(this.getNewStarPosition());
         // 将 Game 组件的实例传入星星组件
         newStar.getComponent('Star').game = this;
+        // 重置计时器，根据消失时间范围随机取一个值
+        this.starDuration = this.minStarDuration + cc.random0To1() * (this.maxStarDuration - this.minStarDuration);
+        this.timer = 0;
     },
 
     getNewStarPosition:function(){
@@ -59,12 +68,24 @@ cc.Class({
         // 返回星星坐标
         return cc.p(randX, randY);
     },
-    // LIFE-CYCLE CALLBACKS:
 
-    
-    start () {
-        
+    update (dt) {
+        // 每帧更新计时器，超过限度还没有生成新的星星
+        // 就会调用游戏失败逻辑
+        if (this.timer > this.starDuration) {
+            this.gameOver();
+            return;
+        }
+        this.timer += dt;
     },
 
-    // update (dt) {},
+    gainScore: function () {
+        this.score += 1;
+        this.scoreDisplay.string = 'Score: ' + this.score.toString();
+    },
+
+    gameOver: function () {
+        this.player.stopAllActions(); //停止 player 节点的跳跃动作
+        cc.director.loadScene('game');
+    }
 });
